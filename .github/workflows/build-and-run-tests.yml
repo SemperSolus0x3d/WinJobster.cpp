@@ -19,14 +19,24 @@ jobs:
     name: Build and Run Tests
     runs-on: windows-latest
 
+    strategy:
+      matrix:
+        arch:
+          - amd64
+          - x86
+
     steps:
 
     - uses: actions/checkout@v3
       with:
         submodules: recursive
 
+    - uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: ${{ matrix.arch }}
+
     - name: Configure
-      run: cmake -B ${{github.workspace}}/build -S ${{github.workspace}} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+      run: cmake -B ${{github.workspace}}/build -S ${{github.workspace}} -G Ninja -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBUILD_TESTING=ON
 
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
