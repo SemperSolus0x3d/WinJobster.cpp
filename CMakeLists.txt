@@ -31,6 +31,10 @@ target_include_directories(${PROJECT_NAME}
     "${CMAKE_CURRENT_SOURCE_DIR}/src"
 )
 
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test)
+if(BUILD_TESTING AND PROJECT_IS_TOP_LEVEL)
+    include(CTest)
+    enable_testing()
+    add_subdirectory(test)
+endif()
 
 install(TARGETS ${PROJECT_NAME})
