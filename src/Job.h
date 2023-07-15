@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include <string>
 #include <vector>
+#define WINNT
+#include <sdkddkver.h>
 #include <windows.h>
 #include "ErrorCode.h"
 
@@ -17,7 +19,7 @@ public:
 
     bool IsAlive();
     void Kill();
-    void Terminate();
+    ErrorCode Terminate();
 
     ErrorCode Job::GetProcessIds(std::vector<uint64_t>& result);
 private:

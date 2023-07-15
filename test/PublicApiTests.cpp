@@ -1,13 +1,14 @@
 ﻿#include <iostream>
 #include <cassert>
 #include <memory>
+#include <thread>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
 #include <PublicApi.h>
 #include "helpers/Constants.h"
 #include "helpers/PublicApiHelpers.h"
 
-TEST_CASE("ItStartsAndKillsProcess", "[public-api]")
+TEST_CASE("It starts and kills a single process", "[public-api]")
 {
     auto handle = InitializeJob();
     auto errorCode = StartProcess(ExistingExecutable, L"", handle.get());
@@ -15,12 +16,21 @@ TEST_CASE("ItStartsAndKillsProcess", "[public-api]")
     REQUIRE(errorCode == ErrorCode::Success);
     REQUIRE(IsAlive(handle.get()) == true);
 
-    Kill(handle.get());
+    SECTION("It kills process")
+    {
+        Kill(handle.get());
+        REQUIRE(IsAlive(handle.get()) == false);
+    }
 
-    REQUIRE(IsAlive(handle.get()) == false);
+    SECTION("It terminates process")
+    {
+        errorCode = Terminate(handle.get());
+        REQUIRE(errorCode == ErrorCode::Success);
+        REQUIRE(IsAlive(handle.get()) == false);
+    }
 }
 
-TEST_CASE("ItReturnsCorrectProcessIdsCount", "[public-api]")
+TEST_CASE("It works with multiple processes", "[public-api]")
 {
     auto handle = InitializeJob();
     const size_t ProcessesCount = GENERATE(1, 2, 10, 15);
@@ -31,16 +41,45 @@ TEST_CASE("ItReturnsCorrectProcessIdsCount", "[public-api]")
         REQUIRE(errorCode == ErrorCode::Success);
     }
 
-    uint64_t* processIdsRawPtr;
-    size_t processesCount;
-    auto errCode = GetProcessIds(handle.get(), &processIdsRawPtr, &processesCount);
+    REQUIRE(IsAlive(handle.get()) == true);
 
-    REQUIRE(errCode == ErrorCode::Success);
+    SECTION("It returns correct process ids")
+    {
+        uint64_t* processIdsRawPtr;
+        size_t processesCount;
+        auto errCode = GetProcessIds(handle.get(), &processIdsRawPtr, &processesCount);
 
-    auto processIds = CreateUniquePtr(processIdsRawPtr);
+        REQUIRE(errCode == ErrorCode::Success);
 
-    REQUIRE(processesCount == ProcessesCount);
+        auto processIds = CreateUniquePtr(processIdsRawPtr);
 
-    for (size_t i = 0; i < processesCount; i++)
-        CHECK(processIds.get()[i] != 0);
+        REQUIRE(processesCount == ProcessesCount);
+
+        for (size_t i = 0; i < processesCount; i++)
+            CHECK(processIds.get()[i] != 0);
+    }
+
+    SECTION("Kill and termination")
+    {
+        SECTION("It kills processes")
+        {
+            Kill(handle.get());
+        }
+
+        SECTION("It terminates processes")
+        {
+            auto errorCode = Terminate(handle.get());
+
+            REQUIRE(errorCode == ErrorCode::Success);
+        }
+
+        REQUIRE(IsAlive(handle.get()) == false);
+
+        uint64_t* processIdsRawPtr;
+        size_t processesCount;
+        auto errCode = GetProcessIds(handle.get(), &processIdsRawPtr, &processesCount);
+
+        REQUIRE(errCode == ErrorCode::Success);
+        REQUIRE(processesCount == 0);
+    }
 }

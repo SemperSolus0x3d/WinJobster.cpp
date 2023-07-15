@@ -39,6 +39,13 @@ WINJOBSTER_PUBLIC_API(void, Kill)(void* handle)
     job->Kill();
 }
 
+WINJOBSTER_PUBLIC_API(ErrorCode, Terminate)(void* handle)
+{
+    auto* job = reinterpret_cast<Job*>(handle);
+
+    return job->Terminate();
+}
+
 WINJOBSTER_PUBLIC_API(void, Cleanup)(void* handle)
 {
     auto* job = reinterpret_cast<Job*>(handle);

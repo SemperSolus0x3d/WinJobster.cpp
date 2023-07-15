@@ -6,6 +6,7 @@ set(BUILD_SHARED_LIBS ON)
 
 set(WINJOBSTER_SRC
     include/Defines.h
+    include/ErrorCode.h
     include/PublicApi.h
     src/Utils.h
     src/Utils.cpp

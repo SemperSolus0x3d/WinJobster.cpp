@@ -1,9 +1,22 @@
-﻿#include "Job.h"
+﻿#include <set>
+#include "Job.h"
 #include "Utils.h"
 #include "Journal.h"
 #include "WinapiHelpers.h"
+#include <cassert>
 
 const ULONG_PTR CompletionKey = 52534;
+
+BOOL CALLBACK EnumChildWindowsCallback(
+    _In_ HWND   hwnd,
+    _In_ LPARAM lParam);
+
+BOOL CALLBACK EnumWindowsCallback(
+    _In_ HWND   hwnd,
+    _In_ LPARAM lParam);
+
+BOOL TerminateProcessIfItIsInTheJob(HWND hwnd, LPARAM lParam);
+
 
 Job::Job()
 {
@@ -167,4 +180,51 @@ void Job::Kill()
 {
     auto retValue = TerminateJobObject(m_Job, 0);
     m_IsAlive = false;
+}
+
+ErrorCode Job::Terminate()
+{
+    std::vector<uint64_t> processIdsList;
+    auto errorCode = GetProcessIds(processIdsList);
+
+    if (errorCode != ErrorCode::Success)
+        return errorCode;
+
+    std::set<uint64_t> processIds(processIdsList.begin(), processIdsList.end());
+
+    EnumWindows(&EnumWindowsCallback, (LPARAM)&processIds);
+
+    Kill();
+
+    return ErrorCode::Success;
+}
+
+BOOL CALLBACK EnumWindowsCallback(
+  _In_ HWND   hwnd,
+  _In_ LPARAM lParam)
+{
+    EnumChildWindows(hwnd, &EnumChildWindowsCallback, lParam);
+    return TerminateProcessIfItIsInTheJob(hwnd, lParam);
+}
+
+BOOL CALLBACK EnumChildWindowsCallback(
+  _In_ HWND   hwnd,
+  _In_ LPARAM lParam)
+{
+    return TerminateProcessIfItIsInTheJob(hwnd, lParam);
+}
+
+BOOL TerminateProcessIfItIsInTheJob(HWND hwnd, LPARAM lParam)
+{
+    DWORD processId;
+
+    if (!GetWindowThreadProcessId(hwnd, &processId))
+        return TRUE;
+
+    auto processIdsPtr = (std::set<uint64_t>*)lParam;
+
+    if (processIdsPtr->find(processId) != processIdsPtr->end())
+        EndTask(hwnd, FALSE, TRUE);
+
+    return TRUE;
 }

@@ -15,6 +15,8 @@ WINJOBSTER_PUBLIC_API(bool, IsAlive)(void* handle);
 
 WINJOBSTER_PUBLIC_API(void, Kill)(void* handle);
 
+WINJOBSTER_PUBLIC_API(ErrorCode, Terminate)(void* handle);
+
 WINJOBSTER_PUBLIC_API(void, Cleanup)(void* handle);
 
 WINJOBSTER_PUBLIC_API(void, FreeMemory)(void* memory);
