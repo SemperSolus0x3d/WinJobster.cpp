@@ -56,10 +56,11 @@ jobs:
     - name: Create Release
       id: create_release
       uses: softprops/action-gh-release@v1
+      working-directory: ${{github.workspace}}
       env:
         GITHUB_TOKEN: ${{ github.token }}
       with:
         name: Release ${{ github.ref_name }}
         files: |
-          ${{github.workspace}}/repo/install/bin/WinJobster-x64.dll
-          ${{github.workspace}}/repo/install/bin/WinJobster-x86.dll
+          repo/install/bin/WinJobster-x64.dll
+          repo/install/bin/WinJobster-x86.dll
