@@ -1,17 +1,30 @@
 cmake_minimum_required(VERSION 3.24)
 
-project(WinJobster VERSION 1.0.0 LANGUAGES CXX)
+project(WinJobster VERSION 2.0.0 LANGUAGES CXX)
 
 set(BUILD_SHARED_LIBS ON)
 
 set(WINJOBSTER_SRC
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/Defines.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/Process.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/Process.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/Utils.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/Utils.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/Wrappers.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/Wrappers.cpp
+    include/Defines.h
+    include/ErrorCode.h
+    include/PublicApi.h
+    src/Utils.h
+    src/Utils.cpp
+    src/PublicApi.cpp
+    src/Job.h
+    src/Job.cpp
+    src/Journal.h
+    src/Journal.cpp
+    src/WinapiHelpers.h
+    src/WinapiHelpers.cpp
+)
+
+set(WINJOBSTER_TEST_SRC
+    test/Tests.cpp
+    test/PublicApiTests.cpp
+    test/helpers/Constants.h
+    test/helpers/PublicApiHelpers.h
+    test/helpers/PublicApiHelpers.cpp
 )
 
 add_library(${PROJECT_NAME} ${WINJOBSTER_SRC})
@@ -31,10 +44,23 @@ target_include_directories(${PROJECT_NAME}
     "${CMAKE_CURRENT_SOURCE_DIR}/src"
 )
 
+install(TARGETS ${PROJECT_NAME})
+
 if(BUILD_TESTING AND PROJECT_IS_TOP_LEVEL)
+    find_package(Catch2 3 REQUIRED)
+
+    add_executable(WinJobsterTests
+        ${WINJOBSTER_SRC}
+        ${WINJOBSTER_TEST_SRC}
+    )
+
+    include(Catch)
     include(CTest)
     enable_testing()
-    add_subdirectory(test)
-endif()
 
-install(TARGETS ${PROJECT_NAME})
+    target_link_libraries(WinJobsterTests PRIVATE Catch2::Catch2WithMain)
+    target_include_directories(WinJobsterTests PRIVATE include)
+    target_compile_definitions(WinJobsterTests PRIVATE WINJOBSTER_TESTING)
+
+    catch_discover_tests(WinJobsterTests)
+endif()
