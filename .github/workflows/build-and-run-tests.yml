@@ -12,6 +12,7 @@ on:
     - dev
 
   workflow_dispatch:
+  workflow_call:
 
 env:
   BUILD_TYPE: Debug
@@ -35,6 +36,7 @@ jobs:
     - uses: actions/checkout@v3
       with:
         submodules: recursive
+        path: repo
 
     - uses: ilammy/msvc-dev-cmd@v1
       with:
@@ -64,13 +66,13 @@ jobs:
         cmake --install build --prefix ${{github.workspace}}/packages --config ${{env.BUILD_TYPE}}
 
     - name: Configure
-      run: cmake -B ${{github.workspace}}/build -S ${{github.workspace}} -G Ninja -DBUILD_TESTING=ON -DCMAKE_PREFIX_PATH=${{github.workspace}}/packages
+      run: cmake -B ${{github.workspace}}/repo/build -S ${{github.workspace}}/repo -G Ninja -DBUILD_TESTING=ON -DCMAKE_PREFIX_PATH=${{github.workspace}}/packages
 
     - name: Build
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+      run: cmake --build ${{github.workspace}}/repo/build --config ${{env.BUILD_TYPE}}
 
     - name: Test
-      working-directory: ${{github.workspace}}/build
+      working-directory: ${{github.workspace}}/repo/build
       run: ctest -C ${{env.BUILD_TYPE}} -j ${{env.CPU_CORES_COUNT}}
 
     - if: ${{ failure() }}
