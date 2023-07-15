@@ -56,7 +56,6 @@ jobs:
     - name: Create Release
       id: create_release
       uses: softprops/action-gh-release@v1
-      working-directory: ${{github.workspace}}
       env:
         GITHUB_TOKEN: ${{ github.token }}
       with:
