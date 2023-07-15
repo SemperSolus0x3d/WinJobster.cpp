@@ -42,8 +42,8 @@ jobs:
     - name: Delete CMake cache
       working-directory: ${{github.workspace}}/repo
       run: |
-        del /S /Q build/CMakeCache.txt
-        del /S /Q build/CMakeFiles
+        cmd /C del /S /Q build/CMakeCache.txt
+        cmd /C del /S /Q build/CMakeFiles
 
     - uses: ilammy/msvc-dev-cmd@v1
       with:
