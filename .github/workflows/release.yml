@@ -1,10 +1,8 @@
-name: Build and Run Tests
+name: Release
 
 on:
   push:
     tags: [ 'v[0-9]+\.[0-9]+\.[0-9]+']
-    branches:
-    - master
 
   workflow_dispatch:
 
@@ -14,14 +12,16 @@ env:
   CATCH2_VERSION: 'v3.4.0'
 
 jobs:
+  build-and-run-tests:
+    name: Build and run tests
+    uses: ./.github/workflows/build-and-run-tests.yml
+
   release:
     name: Release
+    needs: build-and-run-tests
     runs-on: windows-latest
 
     steps:
-    - name: Build and run tests
-      uses: ./.github/workflows/build-and-run-tests.yml
-
     - uses: actions/checkout@v3
       with:
         submodules: recursive
