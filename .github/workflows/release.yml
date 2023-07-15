@@ -33,7 +33,7 @@ jobs:
         cmake -B build -S . -G Ninja -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release
         cmake --build build
         cmake --install build --prefix install
-        rename install/bin/WinJobster.dll WinJobster-x64.dll
+        cmd /C rename install/bin/WinJobster.dll WinJobster-x64.dll
 
     - name: Delete CMake cache
       working-directory: ${{github.workspace}}/repo
@@ -51,7 +51,7 @@ jobs:
         cmake -B build -S . -G Ninja -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release
         cmake --build build
         cmake --install build --prefix install
-        rename install/bin/WinJobster.dll WinJobster-x86.dll
+        cmd /C rename install/bin/WinJobster.dll WinJobster-x86.dll
 
     - name: Create Release
       id: create_release
