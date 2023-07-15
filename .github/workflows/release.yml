@@ -33,13 +33,13 @@ jobs:
         cmake -B build -S . -G Ninja -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release
         cmake --build build
         cmake --install build --prefix install
-        cmd /C rename install/bin/WinJobster.dll WinJobster-x64.dll
+        Rename-Item -Path "install/bin/WinJobster.dll" -NewName WinJobster-x64.dll
 
     - name: Delete CMake cache
       working-directory: ${{github.workspace}}/repo
       run: |
-        cmd /C del /S /Q build/CMakeCache.txt
-        cmd /C del /S /Q build/CMakeFiles
+        Remove-Item -LiteralPath "build/CMakeCache.txt" -Force -Recurse
+        Remove-Item -LiteralPath "build/CMakeFiles" -Force -Recurse
 
     - uses: ilammy/msvc-dev-cmd@v1
       with:
@@ -51,7 +51,7 @@ jobs:
         cmake -B build -S . -G Ninja -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release
         cmake --build build
         cmake --install build --prefix install
-        cmd /C rename install/bin/WinJobster.dll WinJobster-x86.dll
+        Rename-Item -Path "install/bin/WinJobster.dll" -NewName WinJobster-x86.dll
 
     - name: Create Release
       id: create_release
