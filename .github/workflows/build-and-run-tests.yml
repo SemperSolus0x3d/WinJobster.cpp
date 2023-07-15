@@ -61,15 +61,15 @@ jobs:
       if: steps.cache-deps.outputs.cache-hit != 'true'
       working-directory: ${{github.workspace}}/deps/catch2
       run: |
-        cmake -B build -S . -DBUILD_TESTING=OFF -G Ninja
-        cmake --build build --config ${{env.BUILD_TYPE}}
-        cmake --install build --prefix ${{github.workspace}}/packages --config ${{env.BUILD_TYPE}}
+        cmake -B build -S . -DBUILD_TESTING=OFF -G Ninja -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+        cmake --build build
+        cmake --install build --prefix ${{github.workspace}}/packages
 
     - name: Configure
-      run: cmake -B ${{github.workspace}}/repo/build -S ${{github.workspace}}/repo -G Ninja -DBUILD_TESTING=ON -DCMAKE_PREFIX_PATH=${{github.workspace}}/packages
+      run: cmake -B ${{github.workspace}}/repo/build -S ${{github.workspace}}/repo -G Ninja -DBUILD_TESTING=ON -DCMAKE_PREFIX_PATH=${{github.workspace}}/packages -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
     - name: Build
-      run: cmake --build ${{github.workspace}}/repo/build --config ${{env.BUILD_TYPE}}
+      run: cmake --build ${{github.workspace}}/repo/build
 
     - name: Test
       working-directory: ${{github.workspace}}/repo/build

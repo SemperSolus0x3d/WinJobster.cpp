@@ -7,9 +7,6 @@ on:
   workflow_dispatch:
 
 env:
-  BUILD_TYPE: Release
-  CPU_CORES_COUNT: 2
-  CATCH2_VERSION: 'v3.4.0'
 
 jobs:
   build-and-run-tests:
@@ -34,8 +31,8 @@ jobs:
     - name: Build x64
       working-directory: ${{github.workspace}}/repo
       run: |
-        cmake -B build -S . -G Ninja -DBUILD_TESTING=OFF
-        cmake --build build --config Release
+        cmake -B build -S . -G Ninja -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release
+        cmake --build build
         cmake --install build --prefix install
         rename install/bin/WinJobster.dll WinJobster-x64.dll
 
@@ -52,8 +49,8 @@ jobs:
     - name: Build x86
       working-directory: ${{github.workspace}}/repo
       run: |
-        cmake -B build -S . -G Ninja -DBUILD_TESTING=OFF
-        cmake --build build --config Release
+        cmake -B build -S . -G Ninja -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release
+        cmake --build build
         cmake --install build --prefix install
         rename install/bin/WinJobster.dll WinJobster-x86.dll
 
