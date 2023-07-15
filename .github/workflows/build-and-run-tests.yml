@@ -4,15 +4,19 @@ on:
   push:
     branches:
     - master
+    - dev
 
   pull_request:
     branches:
     - master
+    - dev
 
   workflow_dispatch:
 
 env:
   BUILD_TYPE: Debug
+  CPU_CORES_COUNT: 2
+  CATCH2_VERSION: 'v3.4.0'
 
 jobs:
   build-and-run-tests:
@@ -20,6 +24,7 @@ jobs:
     runs-on: windows-latest
 
     strategy:
+      fail-fast: false
       matrix:
         arch:
           - amd64
@@ -35,12 +40,41 @@ jobs:
       with:
         arch: ${{ matrix.arch }}
 
+    - name: Cache dependencies
+      id: cache-deps
+      uses: actions/cache@v3
+      with:
+        path: ${{github.workspace}}/packages
+        key: ${{ env.BUILD_TYPE }}-${{ env.CATCH2_VERSION }}-${{ matrix.arch }}-dependencies
+
+    - name: Checkout Catch2
+      if: steps.cache-deps.outputs.cache-hit != 'true'
+      uses: actions/checkout@v3
+      with:
+        repository: catchorg/Catch2
+        path: deps/catch2
+        ref: ${{ env.CATCH2_VERSION }}
+
+    - name: Build and install Catch2
+      if: steps.cache-deps.outputs.cache-hit != 'true'
+      working-directory: ${{github.workspace}}/deps/catch2
+      run: |
+        cmake -B build -S . -DBUILD_TESTING=OFF -G Ninja
+        cmake --build build --config ${{env.BUILD_TYPE}}
+        cmake --install build --prefix ${{github.workspace}}/packages --config ${{env.BUILD_TYPE}}
+
     - name: Configure
-      run: cmake -B ${{github.workspace}}/build -S ${{github.workspace}} -G Ninja -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBUILD_TESTING=ON
+      run: cmake -B ${{github.workspace}}/build -S ${{github.workspace}} -G Ninja -DBUILD_TESTING=ON -DCMAKE_PREFIX_PATH=${{github.workspace}}/packages
 
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
 
     - name: Test
       working-directory: ${{github.workspace}}/build
-      run: ctest -C ${{env.BUILD_TYPE}}
+      run: ctest -C ${{env.BUILD_TYPE}} -j ${{env.CPU_CORES_COUNT}}
+
+    - if: ${{ failure() }}
+      uses: actions/upload-artifact@v3
+      with:
+        name: TestLog
+        path: ${{github.workspace}}/build/Testing/Temporary/LastTest.log

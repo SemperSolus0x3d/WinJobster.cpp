@@ -1,6 +1,7 @@
 ﻿#include "Job.h"
 #include "Utils.h"
 #include "Journal.h"
+#include "WinapiHelpers.h"
 
 const ULONG_PTR CompletionKey = 52534;
 
@@ -24,14 +25,14 @@ ErrorCode Job::InitializeJob()
     if (m_Job == INVALID_HANDLE_VALUE)
         return ErrorCode::JobObjectCreationFailed;
 
-    journal += [=](){ CloseHandle(m_Job); };
+    journal += [&](){ SafeCloseHandle(m_Job); };
 
     m_CompletionPort = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0);
 
     if (m_CompletionPort == NULL)
         return ErrorCode::CompletionPortCreationFailed;
 
-    journal += [=](){ CloseHandle(m_CompletionPort); };
+    journal += [&](){ SafeCloseHandle(m_CompletionPort); };
 
     JOBOBJECT_ASSOCIATE_COMPLETION_PORT info;
     info.CompletionKey = (PVOID)CompletionKey;
@@ -49,48 +50,41 @@ ErrorCode Job::InitializeJob()
     return ErrorCode::Success;
 }
 
-ErrorCode Job::GetProcessIds(std::vector<ULONG_PTR>& result)
+ErrorCode Job::GetProcessIds(std::vector<uint64_t>& result)
 {
-    JOBOBJECT_BASIC_PROCESS_ID_LIST dummyList;
-    dummyList.NumberOfProcessIdsInList = 1;
+    size_t elementsCount = 64;
+    size_t processIdsListSize;
+    ProcessIdsListPtr processIdsListPtr;
 
-    if (!QueryInformationJobObject(
-        m_Job,
-        JobObjectBasicProcessIdList,
-        &dummyList,
-        sizeof(dummyList),
-        NULL
-    ) && GetLastError() != ERROR_MORE_DATA)
-        return ErrorCode::QueryJobObjectInformationFailed;
+    do
+    {
+        processIdsListPtr = GetProcessIdsListPtr(elementsCount, processIdsListSize);
 
-    size_t processesCount = dummyList.NumberOfAssignedProcesses;
-    size_t requiredBufferSize = sizeof(JOBOBJECT_BASIC_PROCESS_ID_LIST)
-        + (processesCount - 1) * sizeof(ULONG_PTR);
+        if (!QueryInformationJobObject(
+            m_Job,
+            JobObjectBasicProcessIdList,
+            processIdsListPtr.get(),
+            processIdsListSize,
+            NULL
+        ) && GetLastError() != ERROR_MORE_DATA)
+            return ErrorCode::QueryJobObjectInformationFailed;
 
-    requiredBufferSize *= 1.2;
+        if (processIdsListPtr->NumberOfAssignedProcesses != 0 &&
+            processIdsListPtr->NumberOfAssignedProcesses ==
+            processIdsListPtr->NumberOfProcessIdsInList)
+            break;
 
-    auto processIdsListBuffer = std::make_unique<unsigned char[]>(requiredBufferSize);
+        elementsCount *= 2;
+    } while(GetLastError() == ERROR_MORE_DATA);
 
-    auto processIdsListPtr = (JOBOBJECT_BASIC_PROCESS_ID_LIST*)processIdsListBuffer.get();
-    processIdsListPtr->NumberOfProcessIdsInList = processesCount;
+    size_t actualProcessesCount = processIdsListPtr->NumberOfProcessIdsInList;
 
-    if (!QueryInformationJobObject(
-        m_Job,
-        JobObjectBasicProcessIdList,
-        processIdsListPtr,
-        requiredBufferSize,
-        NULL
-    ))
-        return ErrorCode::QueryJobObjectInformationFailed;
+    result.resize(actualProcessesCount);
 
-    auto actualProcessesCount = processIdsListPtr->NumberOfProcessIdsInList;
-
-    result.resize(dummyList.NumberOfAssignedProcesses);
-
-    memcpy(
-        result.data(),
+    std::copy(
         processIdsListPtr->ProcessIdList,
-        sizeof(ULONG_PTR) * actualProcessesCount);
+        processIdsListPtr->ProcessIdList + actualProcessesCount,
+        result.begin());
 
     return ErrorCode::Success;
 }
@@ -174,5 +168,3 @@ void Job::Kill()
     auto retValue = TerminateJobObject(m_Job, 0);
     m_IsAlive = false;
 }
-
-

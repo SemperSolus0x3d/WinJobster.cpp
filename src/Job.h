@@ -19,7 +19,7 @@ public:
     void Kill();
     void Terminate();
 
-    ErrorCode Job::GetProcessIds(std::vector<ULONG_PTR>& result);
+    ErrorCode Job::GetProcessIds(std::vector<uint64_t>& result);
 private:
     HANDLE m_Job = INVALID_HANDLE_VALUE;
     HANDLE m_CompletionPort = INVALID_HANDLE_VALUE;

@@ -1,13 +1,13 @@
-﻿#include "Wrappers.h"
+﻿#include "PublicApi.h"
 #include "Job.h"
 
-WINJOBSTER_WRAPPER(void*, Initialize)()
+WINJOBSTER_PUBLIC_API(void*, Initialize)()
 {
     auto* job = new Job();
     return job;
 }
 
-WINJOBSTER_WRAPPER(ErrorCode, StartProcess)(
+WINJOBSTER_PUBLIC_API(ErrorCode, StartProcess)(
     const wchar_t* cmdline,
     const wchar_t* workingDir,
     void* handle
@@ -25,45 +25,43 @@ WINJOBSTER_WRAPPER(ErrorCode, StartProcess)(
     return errCode;
 }
 
-WINJOBSTER_WRAPPER(bool, IsAlive)(void* handle)
+WINJOBSTER_PUBLIC_API(bool, IsAlive)(void* handle)
 {
     auto* job = reinterpret_cast<Job*>(handle);
 
     return job->IsAlive();
 }
 
-WINJOBSTER_WRAPPER(void, Kill)(void* handle)
+WINJOBSTER_PUBLIC_API(void, Kill)(void* handle)
 {
     auto* job = reinterpret_cast<Job*>(handle);
 
     job->Kill();
 }
 
-WINJOBSTER_WRAPPER(void, Cleanup)(void* handle)
+WINJOBSTER_PUBLIC_API(void, Cleanup)(void* handle)
 {
     auto* job = reinterpret_cast<Job*>(handle);
 
     delete job;
 }
 
-WINJOBSTER_WRAPPER(void, FreeMemory)(void* memory)
+WINJOBSTER_PUBLIC_API(void, FreeMemory)(void* memory)
 {
-    delete memory;
+    free(memory);
 }
 
-WINJOBSTER_WRAPPER(ErrorCode, GetProcessIds)(void* handle, uint64_t** result, size_t* processesCount)
+WINJOBSTER_PUBLIC_API(ErrorCode, GetProcessIds)(void* handle, uint64_t** result, size_t* processesCount)
 {
-    static_assert(sizeof(ULONG_PTR) == sizeof(uint64_t), "");
-
     auto* job = reinterpret_cast<Job*>(handle);
 
-    std::vector<ULONG_PTR> processIds;
+    std::vector<uint64_t> processIds;
     ErrorCode errCode = job->GetProcessIds(processIds);
 
     if (errCode != ErrorCode::Success)
         return errCode;
 
-    *result = new uint64_t[processIds.size()];
+    *result = (uint64_t*)malloc(processIds.size() * sizeof(uint64_t));
     memcpy(*result, processIds.data(), processIds.size() * sizeof(uint64_t));
 
     *processesCount = processIds.size();
