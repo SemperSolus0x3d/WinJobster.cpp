@@ -8,5 +8,6 @@ enum class ErrorCode : uint32_t
     JobObjectCreationFailed = 1,
     CompletionPortCreationFailed = 2,
     FailedToAssociateJobWithCompletionPort = 3,
-    ProcessCreationFailed = 4
+    ProcessCreationFailed = 4,
+    QueryJobObjectInformationFailed = 5
 };

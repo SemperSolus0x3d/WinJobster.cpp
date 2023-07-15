@@ -5,13 +5,15 @@ project(WinJobster VERSION 1.0.0 LANGUAGES CXX)
 set(BUILD_SHARED_LIBS ON)
 
 set(WINJOBSTER_SRC
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/Defines.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/Process.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/Process.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/Utils.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/Utils.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/Wrappers.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/Wrappers.cpp
+    include/Defines.h
+    include/Wrappers.h
+    src/Utils.h
+    src/Utils.cpp
+    src/Wrappers.cpp
+    src/Job.h
+    src/Job.cpp
+    src/Journal.h
+    src/Journal.cpp
 )
 
 add_library(${PROJECT_NAME} ${WINJOBSTER_SRC})
