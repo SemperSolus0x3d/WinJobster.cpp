@@ -6,6 +6,8 @@ on:
 
   workflow_dispatch:
 
+permissions:
+  contents: write
 
 jobs:
   build-and-run-tests:
@@ -63,3 +65,13 @@ jobs:
         files: |
           repo/install/bin/WinJobster-x64.dll
           repo/install/bin/WinJobster-x86.dll
+
+    - name: Rollback Release
+      if: ${{ failure() }}
+      uses: author/action-rollback@stable
+      with:
+        release_id: ${{ steps.create_release.id }}
+        tag: ${{ github.ref_name }}
+        delete_orphan_tag: true
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
