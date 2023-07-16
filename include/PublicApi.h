@@ -3,7 +3,7 @@
 #include "Defines.h"
 #include "ErrorCode.h"
 
-WINJOBSTER_PUBLIC_API(void*, Initialize)();
+WINJOBSTER_PUBLIC_API(void*, CreateJob)();
 
 WINJOBSTER_PUBLIC_API(ErrorCode, StartProcess)(
     const wchar_t* cmdline,
@@ -17,7 +17,7 @@ WINJOBSTER_PUBLIC_API(void, Kill)(void* handle);
 
 WINJOBSTER_PUBLIC_API(ErrorCode, Terminate)(void* handle);
 
-WINJOBSTER_PUBLIC_API(void, Cleanup)(void* handle);
+WINJOBSTER_PUBLIC_API(void, DestroyJob)(void* handle);
 
 WINJOBSTER_PUBLIC_API(void, FreeMemory)(void* memory);
 

@@ -1,7 +1,7 @@
 ﻿#include "PublicApi.h"
 #include "Job.h"
 
-WINJOBSTER_PUBLIC_API(void*, Initialize)()
+WINJOBSTER_PUBLIC_API(void*, CreateJob)()
 {
     auto* job = new Job();
     return job;
@@ -46,7 +46,7 @@ WINJOBSTER_PUBLIC_API(ErrorCode, Terminate)(void* handle)
     return job->Terminate();
 }
 
-WINJOBSTER_PUBLIC_API(void, Cleanup)(void* handle)
+WINJOBSTER_PUBLIC_API(void, DestroyJob)(void* handle)
 {
     auto* job = reinterpret_cast<Job*>(handle);
 

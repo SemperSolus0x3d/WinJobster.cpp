@@ -1,6 +1,6 @@
 ﻿#include "PublicApiHelpers.h"
 
-std::unique_ptr<void, decltype(&Cleanup)> InitializeJob()
+std::unique_ptr<void, decltype(&DestroyJob)> InitializeJob()
 {
-    return std::unique_ptr<void, decltype(&Cleanup)>(Initialize(), &Cleanup);
+    return std::unique_ptr<void, decltype(&DestroyJob)>(CreateJob(), &DestroyJob);
 }

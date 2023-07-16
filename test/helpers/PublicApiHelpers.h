@@ -2,7 +2,7 @@
 #include <memory>
 #include <PublicApi.h>
 
-std::unique_ptr<void, decltype(&Cleanup)> InitializeJob();
+std::unique_ptr<void, decltype(&DestroyJob)> InitializeJob();
 
 template<class T>
 auto CreateUniquePtr(T* rawPtr)
