@@ -65,6 +65,12 @@ ErrorCode Job::InitializeJob()
 
 ErrorCode Job::GetProcessIds(std::vector<uint64_t>& result)
 {
+    auto errCode = ErrorCode::Success;
+
+    if (m_Job == INVALID_HANDLE_VALUE)
+        if ((errCode = InitializeJob()) != ErrorCode::Success)
+            return errCode;
+    
     size_t elementsCount = 64;
     size_t processIdsListSize;
     ProcessIdsListPtr processIdsListPtr;

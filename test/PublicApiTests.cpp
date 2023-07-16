@@ -83,3 +83,14 @@ TEST_CASE("It works with multiple processes", "[public-api]")
         REQUIRE(processesCount == 0);
     }
 }
+
+TEST_CASE("It terminates processes if no process is started")
+{
+    auto handle = InitializeJob();
+    REQUIRE(IsAlive(handle.get()) == false);
+
+    auto errorCode = Terminate(handle.get());
+
+    REQUIRE(errorCode == ErrorCode::Success);
+    REQUIRE(IsAlive(handle.get()) == false);
+}
