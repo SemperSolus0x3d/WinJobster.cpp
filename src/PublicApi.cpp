@@ -8,9 +8,10 @@ WINJOBSTER_PUBLIC_API(void*, CreateJob)()
 }
 
 WINJOBSTER_PUBLIC_API(ErrorCode, StartProcess)(
+    void* handle,
     const wchar_t* cmdline,
     const wchar_t* workingDir,
-    void* handle
+    uint32_t processInitTimeoutMs
 )
 {
     auto* job = reinterpret_cast<Job*>(handle);
@@ -20,7 +21,7 @@ WINJOBSTER_PUBLIC_API(ErrorCode, StartProcess)(
     if (workingDir != NULL)
         workingDirStr = workingDir;
 
-    auto errCode = job->StartProcess(cmdline, workingDirStr);
+    auto errCode = job->StartProcess(cmdline, workingDirStr, processInitTimeoutMs);
 
     return errCode;
 }
@@ -39,11 +40,11 @@ WINJOBSTER_PUBLIC_API(void, Kill)(void* handle)
     job->Kill();
 }
 
-WINJOBSTER_PUBLIC_API(ErrorCode, Terminate)(void* handle)
+WINJOBSTER_PUBLIC_API(ErrorCode, Terminate)(void* handle, uint32_t timeoutMs)
 {
     auto* job = reinterpret_cast<Job*>(handle);
 
-    return job->Terminate();
+    return job->Terminate(timeoutMs);
 }
 
 WINJOBSTER_PUBLIC_API(void, DestroyJob)(void* handle)
