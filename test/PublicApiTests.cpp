@@ -11,7 +11,11 @@
 TEST_CASE("It starts and kills a single process", "[public-api]")
 {
     auto handle = InitializeJob();
-    auto errorCode = StartProcess(ExistingExecutable, L"", handle.get());
+    auto errorCode = StartProcess(
+        handle.get(),
+        ExistingExecutable,
+        L"",
+        DefaultProcessInitTimeoutMs);
 
     REQUIRE(errorCode == ErrorCode::Success);
     REQUIRE(IsAlive(handle.get()) == true);
@@ -24,7 +28,7 @@ TEST_CASE("It starts and kills a single process", "[public-api]")
 
     SECTION("It terminates process")
     {
-        errorCode = Terminate(handle.get());
+        errorCode = Terminate(handle.get(), DefaultTerminateTimeoutMs);
         REQUIRE(errorCode == ErrorCode::Success);
         REQUIRE(IsAlive(handle.get()) == false);
     }
@@ -37,7 +41,12 @@ TEST_CASE("It works with multiple processes", "[public-api]")
 
     for (size_t i = 0; i < ProcessesCount; i++)
     {
-        auto errorCode = StartProcess(ExistingExecutable, L"", handle.get());
+        auto errorCode = StartProcess(
+            handle.get(),
+            ExistingExecutable,
+            L"",
+            DefaultProcessInitTimeoutMs);
+
         REQUIRE(errorCode == ErrorCode::Success);
     }
 
@@ -68,7 +77,7 @@ TEST_CASE("It works with multiple processes", "[public-api]")
 
         SECTION("It terminates processes")
         {
-            auto errorCode = Terminate(handle.get());
+            auto errorCode = Terminate(handle.get(), DefaultTerminateTimeoutMs);
 
             REQUIRE(errorCode == ErrorCode::Success);
         }
@@ -84,13 +93,49 @@ TEST_CASE("It works with multiple processes", "[public-api]")
     }
 }
 
-TEST_CASE("It terminates processes if no process is started")
+TEST_CASE("It terminates processes if no process is started", "[public-api]")
 {
     auto handle = InitializeJob();
     REQUIRE(IsAlive(handle.get()) == false);
 
-    auto errorCode = Terminate(handle.get());
+    auto errorCode = Terminate(handle.get(), DefaultTerminateTimeoutMs);
 
     REQUIRE(errorCode == ErrorCode::Success);
     REQUIRE(IsAlive(handle.get()) == false);
+}
+
+TEST_CASE("It starts process after terminate or kill", "[public-api]")
+{
+    auto handle = InitializeJob();
+    REQUIRE(IsAlive(handle.get()) == false);
+
+    auto errorCode = StartProcess(
+        handle.get(),
+        ExistingExecutable,
+        L"",
+        DefaultProcessInitTimeoutMs);
+
+    REQUIRE(errorCode == ErrorCode::Success);
+
+    SECTION("Terminate")
+    {
+        errorCode = Terminate(handle.get(), DefaultTerminateTimeoutMs);
+        REQUIRE(errorCode == ErrorCode::Success);
+    }
+
+    SECTION("Kill")
+    {
+        Kill(handle.get());
+    }
+
+    REQUIRE(IsAlive(handle.get()) == false);
+
+    errorCode = StartProcess(
+        handle.get(),
+        ExistingExecutable,
+        L"",
+        DefaultProcessInitTimeoutMs);
+
+    REQUIRE(errorCode == ErrorCode::Success);
+    REQUIRE(IsAlive(handle.get()) == true);
 }

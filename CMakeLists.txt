@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.24)
 
-project(WinJobster VERSION 2.0.1 LANGUAGES CXX)
+project(WinJobster VERSION 3.0.0 LANGUAGES CXX)
 
 set(BUILD_SHARED_LIBS ON)
 

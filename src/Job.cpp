@@ -63,6 +63,14 @@ ErrorCode Job::InitializeJob()
     return ErrorCode::Success;
 }
 
+ErrorCode Job::ReinitializeJob()
+{
+    SafeCloseHandle(m_CompletionPort);
+    SafeCloseHandle(m_Job);
+
+    return InitializeJob();
+}
+
 ErrorCode Job::GetProcessIds(std::vector<uint64_t>& result)
 {
     auto errCode = ErrorCode::Success;
@@ -110,7 +118,8 @@ ErrorCode Job::GetProcessIds(std::vector<uint64_t>& result)
 
 ErrorCode Job::StartProcess(
     const std::wstring& cmdline,
-    const std::wstring& workingDir)
+    const std::wstring& workingDir,
+    uint32_t processInitTimeoutMs)
 {
     ErrorCode errCode;
 
@@ -138,7 +147,7 @@ ErrorCode Job::StartProcess(
         NULL,
         NULL,
         TRUE,
-        CREATE_SUSPENDED,
+        CREATE_SUSPENDED | CREATE_NEW_CONSOLE,
         NULL,
         workingDir == L"" ? NULL : workingDirBuffer.get(),
         &startupInfo,
@@ -148,6 +157,7 @@ ErrorCode Job::StartProcess(
 
     AssignProcessToJobObject(m_Job, processInfo.hProcess);
     ResumeThread(processInfo.hThread);
+    WaitForInputIdle(processInfo.hProcess, processInitTimeoutMs);
 
     CloseHandle(processInfo.hProcess);
     CloseHandle(processInfo.hThread);
@@ -185,10 +195,12 @@ bool Job::IsAlive()
 void Job::Kill()
 {
     auto retValue = TerminateJobObject(m_Job, 0);
+
+    ReinitializeJob();
     m_IsAlive = false;
 }
 
-ErrorCode Job::Terminate()
+ErrorCode Job::Terminate(const uint32_t timeoutMs)
 {
     std::vector<uint64_t> processIdsList;
     auto errorCode = GetProcessIds(processIdsList);
@@ -198,7 +210,18 @@ ErrorCode Job::Terminate()
 
     std::set<uint64_t> processIds(processIdsList.begin(), processIdsList.end());
 
-    EnumWindows(&EnumWindowsCallback, (LPARAM)&processIds);
+    uint32_t millisecondsWaited = 0;
+    const uint32_t waitingStep = 50;
+    const uint32_t messagingStep = waitingStep * 8;
+
+    while (IsAlive() && millisecondsWaited < timeoutMs)
+    {
+        if (millisecondsWaited % messagingStep == 0)
+            EnumWindows(&EnumWindowsCallback, (LPARAM)&processIds);
+
+        Sleep(waitingStep);
+        millisecondsWaited += waitingStep;
+    }
 
     Kill();
 
@@ -229,8 +252,10 @@ BOOL TerminateProcessIfItIsInTheJob(HWND hwnd, LPARAM lParam)
 
     auto processIdsPtr = (std::set<uint64_t>*)lParam;
 
+    DWORD dummy;
+
     if (processIdsPtr->find(processId) != processIdsPtr->end())
-        EndTask(hwnd, FALSE, TRUE);
+        PostMessage(hwnd, WM_CLOSE, NULL, NULL);
 
     return TRUE;
 }
